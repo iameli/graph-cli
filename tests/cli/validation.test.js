@@ -20,12 +20,12 @@ describe('Validation', () => {
     'validation/invalid-entity-field-types',
     {
       exitCode: 1,
-    }
+    },
   )
   cliTest(
     'Invalid contract addresses',
     ['codegen'],
-    'validation/invalid-contract-addresses'
+    'validation/invalid-contract-addresses',
   )
   cliTest('Entity field arguments', ['codegen'], 'validation/entity-field-args', {
     exitCode: 1,
@@ -34,6 +34,12 @@ describe('Validation', () => {
     'Example values found in manifest',
     ['codegen'],
     'validation/example-values-found',
-    { exitCode: 0 }
+    { exitCode: 0 },
+  )
+  cliTest(
+    'Invalid data source template',
+    ['codegen'],
+    'validation/invalid-data-source-template',
+    { exitCode: 1 },
   )
 })
