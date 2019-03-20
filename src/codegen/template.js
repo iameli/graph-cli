@@ -37,9 +37,9 @@ module.exports = class DataSourceTemplateCodeGenerator {
         return tsCodegen.staticMethod(
           'create',
           [tsCodegen.param('address', tsCodegen.namedType('Address'))],
-          tsCodegen.namedType('void'),
+          tsCodegen.namedType('boolean'),
           `
-          DataSourceTemplate.create('${name}', [address.toHex()])
+          return DataSourceTemplate.create('${name}', [address.toHex()])
           `,
         )
 
