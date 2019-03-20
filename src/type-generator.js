@@ -240,8 +240,8 @@ module.exports = class TypeGenerator {
 
               let outputFile = path.join(
                 this.options.outputDir,
-                'templates',
-                `${dataSource.get('name')}.ts`,
+                dataSource.get('name'),
+                'templates.ts',
               )
               step(
                 spinner,
