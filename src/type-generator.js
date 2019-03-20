@@ -9,6 +9,7 @@ const toolbox = require('gluegun/toolbox')
 const ABI = require('./abi')
 const Schema = require('./schema')
 const Subgraph = require('./subgraph')
+const DataSourceTemplateCodeGenerator = require('./codegen/template')
 const Watcher = require('./watcher')
 const { step, withSpinner } = require('./command-helpers/spinner')
 
@@ -33,8 +34,13 @@ module.exports = class TypeGenerator {
       let subgraph = await this.loadSubgraph()
       let abis = await this.loadABIs(subgraph)
       await this.generateTypesForABIs(abis)
+
       let schema = await this.loadSchema(subgraph)
       await this.generateTypesForSchema(schema)
+
+      let dataSources = subgraph.get('dataSources')
+      await this.generateTypesForDataSourceTemplates(dataSources)
+
       toolbox.print.success('\nTypes generated successfully\n')
       return true
     } catch (e) {
@@ -192,6 +198,61 @@ module.exports = class TypeGenerator {
         step(spinner, 'Write types to', this.displayPath(outputFile))
         fs.mkdirsSync(path.dirname(outputFile))
         fs.writeFileSync(outputFile, code)
+      },
+    )
+  }
+
+  async generateTypesForDataSourceTemplates(dataSources) {
+    return await withSpinner(
+      `Generate types for data source templates`,
+      `Failed to generate types for data source templates`,
+      `Warnings while generating types for data source templates`,
+      async spinner => {
+        await Promise.all(
+          dataSources.map(async dataSource => {
+            // Combine the generated code for all templates in the date source
+            let codeSegments = dataSource
+              .get('templates', immutable.List())
+              .reduce((codeSegments, template) => {
+                step(
+                  spinner,
+                  'Generate types for data source template',
+                  `${dataSource.get('name')} > ${template.get('name')}`,
+                )
+
+                let codeGenerator = new DataSourceTemplateCodeGenerator(template)
+
+                // Only generate module imports once, because they are identical for all
+                // types generate for data source templates
+                if (codeSegments.isEmpty()) {
+                  codeSegments = codeSegments.concat(
+                    codeGenerator.generateModuleImports(),
+                  )
+                }
+
+                return codeSegments.concat(codeGenerator.generateTypes())
+              }, immutable.List())
+
+            if (!codeSegments.isEmpty()) {
+              let code = prettier.format(codeSegments.join('\n'), {
+                parser: 'typescript',
+              })
+
+              let outputFile = path.join(
+                this.options.outputDir,
+                'templates',
+                `${dataSource.get('name')}.ts`,
+              )
+              step(
+                spinner,
+                `Write types for data source ${dataSource.get('name')} to`,
+                this.displayPath(outputFile),
+              )
+              fs.mkdirsSync(path.dirname(outputFile))
+              fs.writeFileSync(outputFile, code)
+            }
+          }),
+        )
       },
     )
   }
