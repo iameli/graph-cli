@@ -293,8 +293,8 @@ class Compiler {
   }
 
   async writeSubgraphToOutputDirectory(subgraph) {
-    const displayDir = `${this.displayPath(this.options.outputDir)}/${
-      tolbox.filesystem.separator
+    const displayDir = `${this.displayPath(this.options.outputDir)}${
+      toolbox.filesystem.separator
     }`
 
     return await withSpinner(
